@@ -304,7 +304,48 @@ SpringData除了提供默认的空接口repository外,还提供了已经有了很多功能的子接口
 ```
 
 
+## 自定义Repository的方法
 
+### 为某一个Repository添加方法
+
+**1、创建一个接口,什么要添加的方法**
+
+```
+
+	public interface PersonDao {
+
+		void test() ;
+	}
+```
+
+**2、提供该接口的实现类,类名必须和在要申明的Repository后面添加Impl,并实现方法**
+
+```
+	
+	// 为PersonRepository添加方法
+	public class PersonRepositoryImpl implements PersonDao {
+		
+		// 其实这样就把JPA连接起来了
+		@PersistenceContext
+		private EntityManager entityManager;  // 这个类并没有存在Ioc容器中
+		
+		@Override
+		public void test() {
+			Person person = entityManager.find(Person.class, 11);
+			System.out.println("自定义的方法====>" + person );
+	
+		}
+	
+	}
+```
+**3、继承创建的接口**
+```
+	
+	public interface PersonRepository extends  JpaRepository<Person, Integer> 
+								, JpaSpecificationExecutor<Person>,PersonDao{	
+								
+	}
+```
 
 
 
