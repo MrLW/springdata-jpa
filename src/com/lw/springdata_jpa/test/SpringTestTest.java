@@ -19,7 +19,11 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
 
 import com.lw.springdata_jpa.Person;
 import com.lw.springdata_jpa.PersonRepository;
@@ -49,7 +53,7 @@ public class SpringTestTest {
 		//通常使用 Specification 的匿名内部类
 		Specification<Person> specification = new Specification<Person>() {
 			/**
-			 * @param *root: 代表查询的实体类. 
+			 * @param root: 代表查询的实体类. 
 			 * @param query: 可以从中可到 Root 对象, 即告知 JPA Criteria 查询要查询哪一个实体类. 还可以
 			 * 来添加查询条件, 还可以结合 EntityManager 对象得到最终查询的 TypedQuery 对象. 
 			 * @param *cb: CriteriaBuilder 对象. 用于创建 Criteria 相关对象的工厂. 当然可以从中获取到 Predicate 对象
@@ -89,15 +93,19 @@ public class SpringTestTest {
 		person.setEmail("liwen2@qq.com");
 		person.setLastName("liwen2");
 		person.setId(31); // 设置了id，先查询，如果有则update，没有则插入
-		personRepository.saveAndFlush(person); // 没有设置Id，直接插入数据库
+		Person person2 = personRepository.saveAndFlush(person); // 没有设置Id，直接插入数据库
+		System.out.println(person == person ); // false：类似jpa中的merger方法,完成了对象属性的复制
 	}
 	
 	@Test // 测试分页和排序：但是不能有条件分页
 	public void testPagingAndSort(){
 		int pageNum = 3 - 1 ;// 第几页 ，从0开始
 		int pageSize = 5; // 每页显示记录数
-		Pageable pageable = new PageRequest(pageNum, pageSize);
-		// 获取分页对象
+		//Order:对某一个属性是圣墟还是降序
+		Order order1 = new Order(Direction.DESC	, "id"); 
+		Sort sort = new Sort(Direction.ASC	, "email");
+		Pageable pageable = new PageRequest(pageNum, pageSize,sort);
+		// 获取分页对象 
 		Page<Person> page = personRepository.findAll(pageable);
 		System.out.println("size：" + page.getSize());
 		System.out.println("当前页：" + (page.getNumber() + 1 ));
@@ -122,6 +130,13 @@ public class SpringTestTest {
 		personService.savePersons(persons);
 	}
 	
+	/**
+	 *  更新操作时注意事项
+	 *  1、添加@Modifying注解
+	 *  2、springdata修改需要在事务下进行
+	 *  
+	 *  update/delete的jpql需要在@Modifying注解下运行
+	 */
 	@Test
 	public void testUpdate(){
 		personService.updatePersonEmailById( "aaaa.com", 1); 
